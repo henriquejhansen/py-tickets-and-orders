@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import QuerySet
+from django.utils.dateparse import parse_datetime
 
 from db.models import Order, Ticket
 
@@ -12,11 +13,15 @@ def create_order(
         date: str = None
 ) -> Order:
     user = get_user_model().objects.get(username=username)
-    order = Order.objects.create(user=user)
 
+    order_data = {"user": user}
     if date:
-        order.created_at = date
-        order.save()
+        # Parse the date string to datetime object
+        parsed_date = parse_datetime(date)
+        if parsed_date:
+            order_data["created_at"] = parsed_date
+
+    order = Order.objects.create(**order_data)
 
     for ticket_data in tickets:
         Ticket.objects.create(
